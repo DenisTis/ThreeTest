@@ -1,0 +1,26 @@
+{
+    "name": "threetest",
+    "version": "1.0.0",
+    "description": "Tests using Three.js",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack-dev-server",
+        "build:prod": "webpack-dev-server -p"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "script-loader": "^0.7.0",
+        "webpack": "^3.5.4",
+        "webpack-dev-server": "^2.7.1",
+        "yarn": "^0.27.5"
+    },
+    "dependencies": {
+        "requirejs": "^2.3.4",
+        "three": "^0.86.0",
+        "three-mtl-loader": "^1.0.1",
+        "three-obj-loader": "^1.1.2",
+        "three-orbit-controls": "^82.1.0"
+    }
+}
