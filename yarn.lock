@@ -374,6 +374,10 @@ camelcase@^4.0.0, camelcase@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-4.1.0.tgz#d545635be1e33c542649c69173e5de6acfae34dd"
 
+cannon@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/cannon/-/cannon-0.6.2.tgz#1e7bc72dd5841982f3c104c2bc578bfa4fb1c572"
+
 caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
@@ -2833,23 +2837,9 @@ tar@^2.2.1:
     fstream "^1.0.2"
     inherits "2"
 
-three-mtl-loader@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/three-mtl-loader/-/three-mtl-loader-1.0.1.tgz#c0894bc5bd917c74c004361e978b1c222600828b"
-  dependencies:
-    three "^0.79.0"
-
-three-obj-loader@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/three-obj-loader/-/three-obj-loader-1.1.2.tgz#d2c0e30a1acfdb344eac014375594429a0e25a53"
-
 three-orbit-controls@^82.1.0:
   version "82.1.0"
   resolved "https://registry.yarnpkg.com/three-orbit-controls/-/three-orbit-controls-82.1.0.tgz#11a7f33d0a20ecec98f098b37780f6537374fab4"
-
-three@^0.79.0:
-  version "0.79.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.79.0.tgz#3af96fda47f68b7ab093c298dfa335fa45da0cf4"
 
 three@^0.86.0:
   version "0.86.0"
