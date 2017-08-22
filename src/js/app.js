@@ -8,18 +8,25 @@ const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE);
 const CANNON = require('cannon');
 
+require('cannon/tools/threejs/CannonDebugRenderer.js');
+
 //TODO: convert it to return new object
 require('./KeyboardState');
 //const KEYBOARD = require('./KeyboardState');
 const TIMESTEP = 1 / 60;
 
 let keyboard, clock, world, scene, camera, renderer, controls, model, pModel;
+let cannonDebugRenderer;
+
+
 
 keyboard = new KeyboardState();
 initCannon();
-addPModel();
 initThree();
-loadModel();
+addLevel();
+addPModel();
+//loadModel();
+animate();
 
 function initCannon() {
     world = new CANNON.World();
@@ -54,6 +61,8 @@ function initThree() {
     var directionalLight = new THREE.DirectionalLight(0xffeedd);
     directionalLight.position.set(0, 0, 1);
     scene.add(directionalLight);
+
+    cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
 }
 
 function addPModel() {
@@ -85,14 +94,39 @@ function animate() {
     updatePhysics();
     // model.rotation.x += 0.005;
     // model.rotation.y += 0.005;
+    cannonDebugRenderer.update();
     renderer.render(scene, camera);
     updateUserInput();
+    console.log(pModel.position);
 }
 
 function updatePhysics() {
     world.step(TIMESTEP);
-    model.position.copy(pModel.position);
+    // model.position.copy(pModel.position);
     //model.quaternion.copy(pModel.position);
+}
+
+function addLevel() {
+    // let groundShape = new CANNON.Plane();
+    // let groundgroundBody = new CANNON.groundBody({ mass: 0, shape: groundShape });
+    // var rot = new CANNON.Vec3(1, 0, 0);
+    // // groundgroundBody.quaternion.setFromAxisAngle(rot, (Math.PI / 2));
+    // // groundgroundBody.quaternion.copy(groundgroundBody.quaternion);
+    // groundgroundBody.position.set(0, 0, 0);
+    // //    world.add(groundgroundBody);
+    // Physics
+    let shape = new CANNON.Plane();
+    let groundBody = new CANNON.Body({ mass: 0 });
+    groundBody.addShape(shape);
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+    world.add(groundBody);
+
+    // Graphics
+    let geometry = new THREE.PlaneGeometry(100, 100, 1, 1);
+    let material = new THREE.MeshLambertMaterial({ color: 0x777777 });
+    let mesh = new THREE.Mesh(geometry, material);
+    mesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+    scene.add(mesh);
 }
 
 function updateUserInput() {
@@ -113,7 +147,6 @@ function updateUserInput() {
         let speed = clock.getDelta();
         console.log("speed " + speed);
         pModel.velocity.y += 0.01;
-
     }
 
     if (keyboard.pressed("down") || keyboard.pressed("S")) {

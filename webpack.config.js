@@ -8,5 +8,11 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js',
         publicPath: '/dist'
-    }
+    },
+    plugins: [
+        new webpack.ProvidePlugin({
+            THREE: 'three',
+            CANNON: 'cannon'
+        })
+    ]
 };
