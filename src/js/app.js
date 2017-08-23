@@ -25,8 +25,8 @@ initCannon();
 initThree();
 addLevel();
 addPModel();
-//loadModel();
-animate();
+loadModel();
+//animate();
 
 function initCannon() {
     world = new CANNON.World();
@@ -42,7 +42,8 @@ function initThree() {
 
     // Create a basic perspective camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 4;
+    camera.position.z = 5;
+    camera.position.y = 5;
 
     controls = new OrbitControls(camera);
 
@@ -70,8 +71,12 @@ function addPModel() {
     let mass = 1;
     pModel = new CANNON.Body({ mass: mass });
     pModel.position = new CANNON.Vec3(0, 0, -5);
+    let quat = new CANNON.Quaternion();
+    let rot = new CANNON.Vec3(1, 0, 0);
+    quat.setFromAxisAngle(rot, (Math.PI / 5));
+    pModel.quaternion = quat;
     pModel.addShape(shape);
-    pModel.angularVelocity.set(0, 1, 0);
+    //    pModel.angularVelocity.set(0, 1, 0);
     pModel.angularDamping = 0.5;
     world.add(pModel);
 }
@@ -80,10 +85,11 @@ function loadModel() {
     var jLoader = new THREE.JSONLoader();
     jLoader.load('assets/models/simpleCar/test.json', function(geometry, materials) {
         let object = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
-        object.position.z = -5;
-        object.rotation.x = 0.5;
+        // object.position.z = -5;
+        // object.rotation.x = 0.5;
         model = object;
         scene.add(object);
+        //camera.lookAt(model);
         animate();
     });
 }
@@ -97,51 +103,49 @@ function animate() {
     cannonDebugRenderer.update();
     renderer.render(scene, camera);
     updateUserInput();
-    console.log(pModel.position);
 }
 
 function updatePhysics() {
     world.step(TIMESTEP);
-    // model.position.copy(pModel.position);
-    //model.quaternion.copy(pModel.position);
+    model.position.copy(pModel.position);
+    model.quaternion.copy(pModel.quaternion);
 }
 
 function addLevel() {
-    // let groundShape = new CANNON.Plane();
-    // let groundgroundBody = new CANNON.groundBody({ mass: 0, shape: groundShape });
-    // var rot = new CANNON.Vec3(1, 0, 0);
-    // // groundgroundBody.quaternion.setFromAxisAngle(rot, (Math.PI / 2));
-    // // groundgroundBody.quaternion.copy(groundgroundBody.quaternion);
-    // groundgroundBody.position.set(0, 0, 0);
-    // //    world.add(groundgroundBody);
     // Physics
     let shape = new CANNON.Plane();
     let groundBody = new CANNON.Body({ mass: 0 });
     groundBody.addShape(shape);
-    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+    groundBody.position.y = -2;
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
     world.add(groundBody);
 
     // Graphics
     let geometry = new THREE.PlaneGeometry(100, 100, 1, 1);
-    let material = new THREE.MeshLambertMaterial({ color: 0x777777 });
+    var material = new THREE.MeshBasicMaterial({ color: 0x7ec0ee, side: THREE.DoubleSide });
     let mesh = new THREE.Mesh(geometry, material);
     mesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+    mesh.position.y = -2;
     scene.add(mesh);
 }
 
 function updateUserInput() {
     keyboard.update();
 
-    // if (keyboard.pressed("left") || keyboard.pressed("A")) {
-    //     let moveDistance = 1 * clock.getDelta();
-    //     car.rotation.y += moveDistance;
-    // }
+    if (keyboard.pressed("left") || keyboard.pressed("A")) {
+        let rot = new CANNON.Vec3(0, -1, 0);
+        let quat = new CANNON.Quaternion();
+        quat.setFromAxisAngle(rot, Math.PI / 120);
+        pModel.quaternion = pModel.quaternion.mult(quat);
+    }
 
 
-    // if (keyboard.pressed("right") || keyboard.pressed("D")) {
-    //     let moveDistance = 0.7 * clock.getDelta();
-    //     car.rotation.y -= moveDistance;
-    // }
+    if (keyboard.pressed("right") || keyboard.pressed("D")) {
+        let rot = new CANNON.Vec3(0, 1, 0);
+        let quat = new CANNON.Quaternion();
+        quat.setFromAxisAngle(rot, Math.PI / 120);
+        pModel.quaternion = pModel.quaternion.mult(quat);
+    }
 
     if (keyboard.pressed("up") || keyboard.pressed("W")) {
         let speed = clock.getDelta();
