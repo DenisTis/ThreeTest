@@ -1,36 +1,27 @@
 "use strict"
 
-//works with exception in browser: app.js:5 Uncaught ReferenceError: require is not defined
-// require('script-loader!three/build/three.min.js');
-// require('script-loader!three-obj-loader/dist/index.js');
-
 const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE);
 const CANNON = require('cannon');
 
 require('cannon/tools/threejs/CannonDebugRenderer.js');
 
-//TODO: convert it to return new object
 require('./KeyboardState');
-//const KEYBOARD = require('./KeyboardState');
+
 const TIMESTEP = 1 / 60;
 
 let keyboard, clock, world, scene, camera, renderer, controls, model, pModel;
 let cannonDebugRenderer;
 
-
-
 keyboard = new KeyboardState();
 initCannon();
 initThree();
 addLevel();
-addPModel();
 loadModel();
-//animate();
 
 function initCannon() {
     world = new CANNON.World();
-    world.gravity.set(0, -0.1, 0);
+    world.gravity.set(0, -1, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
     world.solver.iterations = 10;
 }
@@ -66,31 +57,46 @@ function initThree() {
     cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
 }
 
-function addPModel() {
-    let shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
-    let mass = 1;
-    pModel = new CANNON.Body({ mass: mass });
+function addPhysicModel(geometry) {
+    pModel = new CANNON.Body({ mass: 2 });
+
+    let vertices = [];
+    let faces = [];
+
+    // Get vertices
+    for (let gVertice of geometry.vertices) {
+        vertices.push(gVertice.x, gVertice.y, gVertice.z);
+    }
+
+    // Get faces
+    for (let gFace of geometry.faces) {
+        faces.push(gFace.a, gFace.b, gFace.c);
+    }
+
+    let modelPart = new CANNON.Trimesh(vertices, faces);
+
+    pModel.addShape(modelPart, new CANNON.Vec3(0, 0, 0));
     pModel.position = new CANNON.Vec3(0, 0, -5);
+
     let quat = new CANNON.Quaternion();
-    let rot = new CANNON.Vec3(1, 0, 0);
+    //this quaternion vector makes object fly upwards (try normalizing quaternion for it)
+    let rot = new CANNON.Vec3(0.8, 0, 0);
     quat.setFromAxisAngle(rot, (Math.PI / 5));
     pModel.quaternion = quat;
-    pModel.addShape(shape);
-    //    pModel.angularVelocity.set(0, 1, 0);
+
+    pModel.angularVelocity.set(0, 1, 0);
     pModel.angularDamping = 0.5;
     world.add(pModel);
+    animate();
 }
 
 function loadModel() {
     var jLoader = new THREE.JSONLoader();
     jLoader.load('assets/models/simpleCar/test.json', function(geometry, materials) {
         let object = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
-        // object.position.z = -5;
-        // object.rotation.x = 0.5;
         model = object;
         scene.add(object);
-        //camera.lookAt(model);
-        animate();
+        addPhysicModel(geometry);
     });
 }
 
@@ -98,9 +104,8 @@ function animate() {
     clock = new THREE.Clock();
     requestAnimationFrame(animate);
     updatePhysics();
-    // model.rotation.x += 0.005;
-    // model.rotation.y += 0.005;
     cannonDebugRenderer.update();
+
     renderer.render(scene, camera);
     updateUserInput();
 }
