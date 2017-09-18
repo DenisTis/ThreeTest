@@ -20,8 +20,7 @@ let ka32 = new KA32();
 initCannon();
 initThree();
 addLevel();
-// loadModel();
-ka32.initialize(keyboard, scene);
+ka32.initialize(keyboard, scene, world);
 animate();
 
 function initCannon() {
@@ -63,53 +62,10 @@ function initThree() {
     // cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
 }
 
-// function addPhysicModel(geometry) {
-//     pModel = new CANNON.Body({ mass: 2 });
-
-//     let vertices = [];
-//     let faces = [];
-
-//     // Get vertices
-//     for (let gVertice of geometry.vertices) {
-//         vertices.push(gVertice.x, gVertice.y, gVertice.z);
-//     }
-
-//     // Get faces
-//     for (let gFace of geometry.faces) {
-//         faces.push(gFace.a, gFace.b, gFace.c);
-//     }
-
-//     let modelPart = new CANNON.Trimesh(vertices, faces);
-
-//     pModel.addShape(modelPart, new CANNON.Vec3(0, 0, 0));
-//     pModel.position = new CANNON.Vec3(0, 0, -5);
-
-//     let quat = new CANNON.Quaternion();
-//     //this quaternion vector makes object fly upwards (try normalizing quaternion for it)
-//     let rot = new CANNON.Vec3(0.8, 0, 0);
-//     quat.setFromAxisAngle(rot, (Math.PI / 5));
-//     pModel.quaternion = quat;
-
-//     pModel.angularVelocity.set(0, 1, 0);
-//     pModel.angularDamping = 0.5;
-//     world.add(pModel);
-//     animate();
-// }
-
-// function loadModel() {
-//     var jLoader = new THREE.JSONLoader();
-//     jLoader.load('assets/models/simpleCar/test.json', function(geometry, materials) {
-//         let object = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
-//         model = object;
-//         scene.add(object);
-//         addPhysicModel(geometry);
-//     });
-// }
-
 function animate() {
     // clock = new THREE.Clock();
     requestAnimationFrame(animate);
-    // updatePhysics();
+    updatePhysics();
     // cannonDebugRenderer.update();
 
     renderer.render(scene, camera);
@@ -117,9 +73,8 @@ function animate() {
 }
 
 function updatePhysics() {
-    // world.step(TIMESTEP);
-    // model.position.copy(pModel.position);
-    // model.quaternion.copy(pModel.quaternion);
+    world.step(TIMESTEP);
+    ka32.updatePhysics();
 }
 
 function addLevel() {
