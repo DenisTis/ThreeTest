@@ -6,7 +6,10 @@ var body, upperRotor, lowerRotor;
 var upperRotorPivot, lowerRotorPivot;
 var cannonModel, physicsModel;
 var movementVector = new CANNON.Vec3(0, 0, 0);
-var movementUpdateVector = new CANNON.Vec3(0, 0, 0);;
+var movementUpdateVector = new CANNON.Vec3(0, 0, 0);
+var bladesSpeed = 0;
+var MAXVERTSPEED = 20;
+var MAXHORSPEED = 30;
 
 function Ka32() {
     console.log("Started");
@@ -82,7 +85,7 @@ function addPhysicsModel(geometry) {
     let modelPart = new CANNON.Trimesh(vertices, faces);
 
     physicsModel.addShape(modelPart, new CANNON.Vec3(0, 0, 0));
-    physicsModel.position = new CANNON.Vec3(0, 0, -10);
+    physicsModel.position = new CANNON.Vec3(0, -2.03066, -10);
 
     // let quat = new CANNON.Quaternion();
     // //this quaternion vector makes object fly upwards (try normalizing quaternion for it)
@@ -91,29 +94,62 @@ function addPhysicsModel(geometry) {
     // physicsModel.quaternion = quat;
 
     //physicsModel.angularVelocity.set(0, 0, 0);
-    physicsModel.velocity.y = 4;
+    //physicsModel.velocity.y = 4;
     let damping = 0.1;
     physicsModel.linearDamping = damping;
     physicsModel.angularDamping = damping;
     world.add(physicsModel);
 }
 
+function isOnGround() {
+    if (!physicsModel) {
+        return true;
+    }
+    if (physicsModel.position.y < -2.0306 && bladesSpeed <= 0.1) {
+        return true;
+    }
+    return false;
+}
+
+function updateUserInputOnGround() {
+    var isStarting = false;
+    if (keyboard.pressed("shift")) {
+        isStarting = true;
+        bladesSpeed += 0.0005;
+        if (bladesSpeed > 0.5) {
+            //0.3 is minimum impulse possible here
+            movementVector.y += 0.03;
+        }
+    }
+    if (!isStarting) {
+        bladesSpeed = bladesSpeed * 0.99;
+    }
+}
+
 function updateUserInput() {
-    // if user clicks up and forward together, both vectors should be calculated
-    //helicopter speed should be limited
-    // find out how to make blades rotate while heli is moving and is in the air
-    // in the beginning blades should rotate, but flight should start later
-    // then blades should rotate all the time, but with different speed
-    // they could only stop rotating when on ground and pressing down button to stop it
+    /*While helicopter is on ground, 
+    first blades should start to rotate, then heli should start to go up
+    until then it should not be able to move or turn
+    Coming back to ground should stop rotation after landing slowly
+    */
     movementUpdateVector = new CANNON.Vec3(0, 0, 0);
+    console.log(isOnGround());
+    if (isOnGround()) {
+        updateUserInputOnGround();
+        return;
+    }
 
     if (keyboard.pressed("up") || keyboard.pressed("W")) {
-        movementUpdateVector.z += 0.02;
+        if (movementVector.z < MAXHORSPEED) {
+            movementUpdateVector.z += 0.03;
+        }
         // var localVelocity = new CANNON.Vec3(0, 0, 2);
         // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
     }
     if (keyboard.pressed("down") || keyboard.pressed("S")) {
-        movementUpdateVector.z -= 0.02;
+        if (movementVector.z > -MAXHORSPEED) {
+            movementUpdateVector.z -= 0.03;
+        }
         // var localVelocity = new CANNON.Vec3(0, 0, -2);
         // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
     }
@@ -132,16 +168,15 @@ function updateUserInput() {
         physicsModel.quaternion = physicsModel.quaternion.mult(quat);
     }
     if (keyboard.pressed("shift")) {
-        movementUpdateVector.y += 0.2;
+        if (movementVector.y < MAXVERTSPEED) {
+            movementUpdateVector.y += 0.2;
+        }
         // var localVelocity = new CANNON.Vec3(0, 2, 0);
         // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
         //physicsModel.velocity.y += 0.1;
     }
     if (keyboard.pressed("ctrl")) {
         movementUpdateVector.y -= 0.2;
-        // var localVelocity = new CANNON.Vec3(0, 2, 0);
-        // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
-        //physicsModel.velocity.y += 0.1;
     }
     if (movementUpdateVector.z != 0 || movementUpdateVector.y != 0) {
         movementVector.vadd(movementUpdateVector, movementVector);
@@ -152,9 +187,11 @@ function updateUserInput() {
 function updatePhysics() {
     // it is not only physics, but also three frame updates
     //apply here vector negation so that it starts to fall slowly after some time
-    if (movementUpdateVector.z == 0 && movementUpdateVector.y == 0) {
+    if (movementUpdateVector.z == 0) {
         movementVector.z = movementVector.z * 0.99;
-        movementVector.y = movementVector.y * 0.99;
+    }
+    if (movementUpdateVector.y == 0) {
+        movementVector.y = movementVector.y * 0.7;
     }
     if (movementVector.z < 0.02 && movementVector.z > -0.02) {
         movementVector.z = 0;
@@ -163,7 +200,7 @@ function updatePhysics() {
         movementVector.y = 0;
     }
 
-    if (movementVector.z != 0 && movementVector.y != 0) {
+    if (movementVector.z != 0 || movementVector.y != 0) {
         physicsModel.quaternion.vmult(movementVector, physicsModel.velocity);
     }
 
@@ -171,7 +208,7 @@ function updatePhysics() {
         body.position.copy(physicsModel.position);
         body.quaternion.copy(physicsModel.quaternion);
 
-        upperRotorPivot.rotation.y += physicsModel.velocity.y / 20;
-        lowerRotorPivot.rotation.y -= physicsModel.velocity.y / 20;
+        upperRotorPivot.rotation.y += bladesSpeed;
+        lowerRotorPivot.rotation.y -= bladesSpeed;
     }
 }
