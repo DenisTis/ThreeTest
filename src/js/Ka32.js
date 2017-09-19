@@ -5,6 +5,8 @@ var keyboard, world;
 var body, upperRotor, lowerRotor;
 var upperRotorPivot, lowerRotorPivot;
 var cannonModel, physicsModel;
+var movementVector = new CANNON.Vec3(0, 0, 0);
+var movementUpdateVector = new CANNON.Vec3(0, 0, 0);;
 
 function Ka32() {
     console.log("Started");
@@ -99,16 +101,21 @@ function addPhysicsModel(geometry) {
 function updateUserInput() {
     // if user clicks up and forward together, both vectors should be calculated
     //helicopter speed should be limited
+    // find out how to make blades rotate while heli is moving and is in the air
+    // in the beginning blades should rotate, but flight should start later
+    // then blades should rotate all the time, but with different speed
+    // they could only stop rotating when on ground and pressing down button to stop it
+    movementUpdateVector = new CANNON.Vec3(0, 0, 0);
 
     if (keyboard.pressed("up") || keyboard.pressed("W")) {
-        var localVelocity = new CANNON.Vec3(0, 0, 2);
-        //        var localVelocity = new CANNON.Vec3(physicsModel.velocity.z, physicsModel.velocity.y, 2);
-        physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
-        //        physicsModel.velocity.x += 0.1;
+        movementUpdateVector.z += 0.02;
+        // var localVelocity = new CANNON.Vec3(0, 0, 2);
+        // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
     }
     if (keyboard.pressed("down") || keyboard.pressed("S")) {
-        var localVelocity = new CANNON.Vec3(0, 0, -2);
-        physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
+        movementUpdateVector.z -= 0.02;
+        // var localVelocity = new CANNON.Vec3(0, 0, -2);
+        // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
     }
 
     if (keyboard.pressed("left") || keyboard.pressed("A")) {
@@ -125,16 +132,46 @@ function updateUserInput() {
         physicsModel.quaternion = physicsModel.quaternion.mult(quat);
     }
     if (keyboard.pressed("shift")) {
-        var localVelocity = new CANNON.Vec3(0, 2, 0);
-        physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
+        movementUpdateVector.y += 0.2;
+        // var localVelocity = new CANNON.Vec3(0, 2, 0);
+        // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
         //physicsModel.velocity.y += 0.1;
+    }
+    if (keyboard.pressed("ctrl")) {
+        movementUpdateVector.y -= 0.2;
+        // var localVelocity = new CANNON.Vec3(0, 2, 0);
+        // physicsModel.quaternion.vmult(localVelocity, physicsModel.velocity);
+        //physicsModel.velocity.y += 0.1;
+    }
+    if (movementUpdateVector.z != 0 || movementUpdateVector.y != 0) {
+        movementVector.vadd(movementUpdateVector, movementVector);
+        //physicsModel.quaternion.vmult(movementUpdateVector, physicsModel.velocity);
     }
 }
 
 function updatePhysics() {
-    body.position.copy(physicsModel.position);
-    body.quaternion.copy(physicsModel.quaternion);
+    // it is not only physics, but also three frame updates
+    //apply here vector negation so that it starts to fall slowly after some time
+    if (movementUpdateVector.z == 0 && movementUpdateVector.y == 0) {
+        movementVector.z = movementVector.z * 0.99;
+        movementVector.y = movementVector.y * 0.99;
+    }
+    if (movementVector.z < 0.02 && movementVector.z > -0.02) {
+        movementVector.z = 0;
+    }
+    if (movementVector.y < 0.02 && movementVector.y > -0.02) {
+        movementVector.y = 0;
+    }
 
-    upperRotorPivot.rotation.y += physicsModel.velocity.y / 20;
-    lowerRotorPivot.rotation.y -= physicsModel.velocity.y / 20;
+    if (movementVector.z != 0 && movementVector.y != 0) {
+        physicsModel.quaternion.vmult(movementVector, physicsModel.velocity);
+    }
+
+    if (physicsModel) {
+        body.position.copy(physicsModel.position);
+        body.quaternion.copy(physicsModel.quaternion);
+
+        upperRotorPivot.rotation.y += physicsModel.velocity.y / 20;
+        lowerRotorPivot.rotation.y -= physicsModel.velocity.y / 20;
+    }
 }

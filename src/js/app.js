@@ -65,11 +65,10 @@ function initThree() {
 function animate() {
     // clock = new THREE.Clock();
     requestAnimationFrame(animate);
+    updateUserInput();
     updatePhysics();
     // cannonDebugRenderer.update();
-
     renderer.render(scene, camera);
-    updateUserInput();
 }
 
 function updatePhysics() {
